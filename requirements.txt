@@ -48,13 +48,6 @@ distro==1.9.0
 docker==7.2.0
 dpath==2.2.0
 dulwich==1.2.15
-dvc==3.67.1
-dvc-data==3.18.3
-dvc-http==2.32.0
-dvc-objects==5.2.0
-dvc-render==1.0.2
-dvc-studio-client==0.23.0
-dvc-task==0.40.2
 entrypoints==0.4
 et_xmlfile==2.0.0
 executing==2.2.1
@@ -159,6 +152,7 @@ prompt_toolkit==3.0.53
 propcache==0.5.4
 protobuf==6.33.6
 psutil==7.2.2
+psycopg2-binary==2.9.13
 ptyprocess==0.7.0
 pure_eval==0.2.4
 pyarrow==25.0.1

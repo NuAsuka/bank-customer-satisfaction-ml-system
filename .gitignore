@@ -1,4 +1,5 @@
 .venv
-data/raw/*.xlsx
+data/raw/*.csv
+data/incoming/*.csv
 __pycache__/
 .ipynb_checkpoints/

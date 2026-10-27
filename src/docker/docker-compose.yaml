@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: postgres_db_ml_project
+    environment:
+      POSTGRES_DB: database
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 1
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d database"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    volumes:
+      # Данные БД сохраняются между перезапусками контейнера.
+      - postgres_data_ml_project:/var/lib/postgresql/data
+      # DDL применяется при первом создании тома.
+      - ../sql/01_er_model.sql:/docker-entrypoint-initdb.d/01_er_model.sql:ro,Z
+
+volumes:
+  postgres_data_ml_project:
