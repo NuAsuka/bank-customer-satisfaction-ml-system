@@ -3,22 +3,51 @@ services:
     image: postgres:16-alpine
     container_name: postgres_db_ml_project
     environment:
-      POSTGRES_DB: database
+      POSTGRES_DB: database_ml_project
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: 1
     ports:
       - "5433:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d database"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d database_ml_project"]
       interval: 5s
       timeout: 5s
       retries: 5
       start_period: 5s
     volumes:
-      # Данные БД сохраняются между перезапусками контейнера.
       - postgres_data_ml_project:/var/lib/postgresql/data
-      # DDL применяется при первом создании тома.
-      - ../sql/01_er_model.sql:/docker-entrypoint-initdb.d/01_er_model.sql:ro,Z
+      - ../sql:/docker-entrypoint-initdb.d:z
+  airflow:
+    image: apache/airflow:3.3.2
+    command:
+      - bash
+      - -c
+      - |
+        mkdir -p /opt/airflow/auth
+        printf '{"admin": "admin"}' > /opt/airflow/auth/passwords.json
+        exec airflow standalone
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:1@db:5432/airflow
+      _PIP_ADDITIONAL_REQUIREMENTS: pandas scikit-learn psycopg2-binary joblib
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__DEFAULT_TIMEZONE: Europe/Moscow
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS: "admin:admin"
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE: /opt/airflow/auth/passwords.json
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: database_ml_project
+      DB_USER: admin
+      DB_PASSWORD: 1
+    volumes:
+      - ../dags:/opt/airflow/dags:z
+      - ..:/opt/airflow/project:z
+      - ../../config:/opt/airflow/secrets:z
+    ports:
+      - "8085:8080"
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data_ml_project:

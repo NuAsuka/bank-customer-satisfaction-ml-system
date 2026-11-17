@@ -1,0 +1,82 @@
+{
+  "version": "3.0.0",
+  "darkMode": true,
+  "gridEnabling": false,
+  "currentViewName": null,
+  "defaultView": {
+    "detailLevel": "All",
+    "relationshipMode": "All",
+    "tablePositions": [
+      {
+        "name": "review",
+        "schemaName": "raw",
+        "x": 1083.639532208077,
+        "y": 1413.6197560907349
+      },
+      {
+        "name": "review_enrichment",
+        "schemaName": "raw",
+        "x": 1150.1988953550149,
+        "y": 553.2605741034936
+      },
+      {
+        "name": "review_clean",
+        "schemaName": "staging",
+        "x": 687.3926851783406,
+        "y": 1405.6948247864634
+      },
+      {
+        "name": "run_log",
+        "schemaName": "etl",
+        "x": 31.901153564453125,
+        "y": 665.9375350598466
+      },
+      {
+        "name": "review",
+        "schemaName": "quarantine",
+        "x": 556.065177573958,
+        "y": 102.25210477577514
+      },
+      {
+        "name": "review_enrichment",
+        "schemaName": "quarantine",
+        "x": 540.653083457747,
+        "y": 370.1607665768855
+      },
+      {
+        "name": "review_enrichment_clean",
+        "schemaName": "staging",
+        "x": 1687.1683959960938,
+        "y": 323
+      },
+      {
+        "name": "ml_predictions",
+        "schemaName": "staging",
+        "x": 2233.6600952148438,
+        "y": 12
+      },
+      {
+        "name": "training_set",
+        "schemaName": "staging",
+        "x": 185.72994347195782,
+        "y": 1385.10731209335
+      },
+      {
+        "name": "review_batches",
+        "schemaName": "etl",
+        "x": 34.189807651959825,
+        "y": 35.774793912814175
+      },
+      {
+        "name": "review_enrichment_batches",
+        "schemaName": "etl",
+        "x": 12,
+        "y": 346
+      }
+    ],
+    "tableGroupCollapseStates": [],
+    "stickyNoteLayouts": [],
+    "referencePaths": []
+  },
+  "views": {}
+}
