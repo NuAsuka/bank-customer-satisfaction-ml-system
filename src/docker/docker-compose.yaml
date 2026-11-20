@@ -41,8 +41,9 @@ services:
       DB_PASSWORD: 1
     volumes:
       - ../dags:/opt/airflow/dags:z
-      - ..:/opt/airflow/project:z
+      - ..:/opt/airflow/project/src:z
       - ../../config:/opt/airflow/secrets:z
+      - ../../data:/opt/airflow/project/data:z
     ports:
       - "8085:8080"
     depends_on:

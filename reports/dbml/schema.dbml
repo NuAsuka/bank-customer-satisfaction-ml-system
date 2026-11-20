@@ -1,0 +1,225 @@
+// Схема хранилища ML-проекта: слои raw, quarantine, staging и технический слой etl.
+// Линии к etl.review_batches и etl.review_enrichment_batches это внешние ключи по номеру партии.
+// Остальные линии логические: staging собирается из raw по ключу отзыва, внешними ключами не объявлен.
+
+Project ml_study_work {
+  database_type: 'PostgreSQL'
+  Note: 'Хранилище системы анализа удовлетворённости клиентов банка'
+}
+
+// ---------------------------------------------------------------- raw
+
+Table raw.review {
+  id_client       varchar(32) [not null]
+  review_dttm     timestamptz [not null]
+  batch_review_id bigint      [not null]
+  review_source   varchar(50)
+  review_text     text
+  received_at     timestamptz [not null]
+
+  indexes {
+    (id_client, review_dttm) [pk]
+    batch_review_id
+  }
+
+  Note: 'Порция отзывов в том виде, в каком пришла от источника'
+}
+
+Table raw.review_enrichment {
+  id_client           varchar(32) [not null]
+  review_dttm         timestamptz [not null]
+  batch_enrichment_id bigint      [not null]
+  review_source       varchar(50)
+  product             varchar(50)
+  review_emotion      varchar(20)
+  received_at         timestamptz [not null]
+
+  indexes {
+    (id_client, review_dttm) [pk]
+    batch_enrichment_id
+  }
+
+  Note: 'Партия разметки: продукт и фактическая эмоция, приходят с задержкой'
+}
+
+// ---------------------------------------------------------------- quarantine
+
+Table quarantine.review {
+  id_client       varchar(32) [not null]
+  review_dttm     timestamptz [not null]
+  batch_review_id bigint      [not null]
+  reason_text     text
+  quarantine_at   timestamptz
+
+  indexes {
+    (id_client, review_dttm) [pk]
+    batch_review_id
+  }
+
+  Note: 'Маркер отбраковки отзыва со ссылкой на строку raw.review'
+}
+
+Table quarantine.review_enrichment {
+  id_client           varchar(32) [not null]
+  review_dttm         timestamptz [not null]
+  batch_enrichment_id bigint      [not null]
+  reason_text         text
+  quarantine_at       timestamptz
+
+  indexes {
+    (id_client, review_dttm) [pk]
+    batch_enrichment_id
+  }
+
+  Note: 'Маркер отбраковки строки разметки со ссылкой на raw.review_enrichment'
+}
+
+// ---------------------------------------------------------------- staging
+
+Table staging.review_clean {
+  id_client       varchar(32) [not null]
+  review_dttm     timestamptz [not null]
+  batch_review_id bigint      [not null]
+  review_source   varchar(50)
+  review_text     text
+
+  indexes {
+    (id_client, review_dttm) [pk]
+    batch_review_id
+  }
+
+  Note: 'Отзывы, прошедшие проверки качества'
+}
+
+Table staging.review_enrichment_clean {
+  id_client           varchar(32) [not null]
+  review_dttm         timestamptz [not null]
+  batch_enrichment_id bigint      [not null]
+  review_source       varchar(50)
+  product             varchar(50)
+  review_emotion      varchar(20)
+
+  indexes {
+    (id_client, review_dttm) [pk]
+    batch_enrichment_id
+  }
+
+  Note: 'Разметка, прошедшая проверки качества'
+}
+
+Table staging.ml_predictions {
+  id_client              varchar(32) [not null]
+  review_dttm            timestamptz [not null]
+  model_version          varchar(50) [not null]
+  batch_review_id        bigint      [not null]
+  review_emotion_prob    numeric(6,5)
+  review_emotion_predict varchar(20)
+  scored_at              timestamptz
+
+  indexes {
+    (id_client, review_dttm, model_version) [pk]
+    batch_review_id
+  }
+
+  Note: 'Предсказания по версиям модели, строки не перезаписываются'
+}
+
+Table staging.training_set {
+  id_client           varchar(32) [not null]
+  review_dttm         timestamptz [not null]
+  batch_review_id     bigint      [not null]
+  batch_enrichment_id bigint
+  review_source       varchar(50)
+  review_text         text
+  product             varchar(50)
+  review_emotion      varchar(20)
+
+  indexes {
+    (id_client, review_dttm) [pk]
+    batch_review_id
+    batch_enrichment_id
+  }
+
+  Note: 'Обучающая выборка: review_clean плюс разметка, review_emotion пустая до обогащения'
+}
+
+// ---------------------------------------------------------------- etl
+
+Table etl.review_batches {
+  batch_review_id bigint      [pk, increment]
+  file_name       text        [not null]
+  file_sha256     char(64)    [not null]
+  rows_loaded     integer
+  period_start    date
+  period_end      date
+  loaded_at       timestamptz [not null]
+  status          varchar(20) [not null]
+
+  indexes {
+    file_sha256 [unique]
+  }
+
+  Note: 'Реестр загруженных файлов отзывов'
+}
+
+Table etl.review_enrichment_batches {
+  batch_enrichment_id bigint      [pk, increment]
+  file_name           text        [not null]
+  file_sha256         char(64)    [not null]
+  rows_loaded         integer
+  period_start        date
+  period_end          date
+  loaded_at           timestamptz [not null]
+  status              varchar(20) [not null]
+
+  indexes {
+    file_sha256 [unique]
+  }
+
+  Note: 'Реестр загруженных файлов разметки'
+}
+
+Table etl.run_log {
+  run_id              bigint      [pk, increment]
+  batch_review_id     bigint
+  batch_enrichment_id bigint
+  stage               varchar(20) [not null]
+  status              varchar(20) [not null]
+  attempt             smallint    [not null, default: 1]
+  started_at          timestamptz [not null]
+  finished_at         timestamptz
+  rows_in             integer
+  rows_out            integer
+  rows_rejected       integer
+  model_version       varchar(50)
+  message             text
+
+  indexes {
+    (batch_review_id, stage, attempt)
+    (batch_enrichment_id, stage, attempt)
+  }
+
+  Note: 'Журнал запусков: одна строка на исполнение шага по порции'
+}
+
+// ---------------------------------------------------------------- связи
+
+// Внешние ключи: партия загрузки
+Ref: raw.review.batch_review_id > etl.review_batches.batch_review_id
+Ref: raw.review_enrichment.batch_enrichment_id > etl.review_enrichment_batches.batch_enrichment_id
+Ref: quarantine.review.batch_review_id > etl.review_batches.batch_review_id
+Ref: quarantine.review_enrichment.batch_enrichment_id > etl.review_enrichment_batches.batch_enrichment_id
+Ref: staging.review_clean.batch_review_id > etl.review_batches.batch_review_id
+Ref: staging.review_enrichment_clean.batch_enrichment_id > etl.review_enrichment_batches.batch_enrichment_id
+Ref: staging.ml_predictions.batch_review_id > etl.review_batches.batch_review_id
+Ref: staging.training_set.batch_review_id > etl.review_batches.batch_review_id
+Ref: staging.training_set.batch_enrichment_id > etl.review_enrichment_batches.batch_enrichment_id
+Ref: etl.run_log.batch_review_id > etl.review_batches.batch_review_id
+Ref: etl.run_log.batch_enrichment_id > etl.review_enrichment_batches.batch_enrichment_id
+
+// Логические связи по ключу отзыва, не внешние ключи
+Ref: raw.review.(id_client, review_dttm) - staging.review_clean.(id_client, review_dttm)
+Ref: raw.review_enrichment.(id_client, review_dttm) - staging.review_enrichment_clean.(id_client, review_dttm)
+Ref: staging.ml_predictions.(id_client, review_dttm) > staging.review_clean.(id_client, review_dttm)
+Ref: quarantine.review.(id_client, review_dttm) - raw.review.(id_client, review_dttm)
+Ref: quarantine.review_enrichment.(id_client, review_dttm) - raw.review_enrichment.(id_client, review_dttm)

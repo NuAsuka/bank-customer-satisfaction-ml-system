@@ -1,0 +1,13 @@
+{
+  "family": "logistic_regression",
+  "params": {
+    "C": 10.0,
+    "l1_ratio": 0.0
+  },
+  "use_numeric": true,
+  "identical": true,
+  "max_probability_difference": 0.0,
+  "artifact_sha256": "b06c5dd2460fa5ca522c98dbbf497105603b2a9eef28c8c4dea1d24885683818",
+  "artifact_identical": true,
+  "seed": 42
+}

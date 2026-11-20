@@ -3,7 +3,7 @@ from psycopg2.extras import execute_values
 
 TIMEZONE = "Europe/Moscow"
 REVIEW_COLUMNS = ["id_client", "review_dttm", "review_source", "review_text"]
-ENRICHMENT_COLUMNS = ["id_client", "review_dttm", "review_source", "product", "review_emotion"]
+ENRICHMENT_COLUMNS = ["id_client", "review_dttm", "product", "review_emotion"]
 
 
 def _value(value):
@@ -94,7 +94,6 @@ def load_enrichment(conn, batch_enrichment_id: int, path) -> dict:
             _value(row.id_client),
             row.review_dttm,
             batch_enrichment_id,
-            _value(row.review_source),
             _value(row.product),
             _value(row.review_emotion),
         )
@@ -110,7 +109,7 @@ def load_enrichment(conn, batch_enrichment_id: int, path) -> dict:
             cur,
             """
             INSERT INTO raw.review_enrichment
-                (id_client, review_dttm, batch_enrichment_id, review_source, product, review_emotion)
+                (id_client, review_dttm, batch_enrichment_id, product, review_emotion)
             VALUES %s
             ON CONFLICT (id_client, review_dttm) DO UPDATE
                SET batch_enrichment_id = EXCLUDED.batch_enrichment_id,

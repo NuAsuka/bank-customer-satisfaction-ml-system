@@ -1,0 +1,31 @@
+{
+  "model_version": "v1",
+  "trained_at": "2026-11-20T09:35:42.243567+00:00",
+  "run_id": "20261120T092938-fa0a86",
+  "family": "logistic_regression",
+  "params": {
+    "C": 10.0,
+    "l1_ratio": 0.0
+  },
+  "text_repr": "tfidf",
+  "use_numeric": true,
+  "features": [
+    "review_text",
+    "review_source"
+  ],
+  "n_train": 26321,
+  "n_test": 6581,
+  "seed": 42,
+  "sklearn_version": "1.9.1",
+  "cv": {
+    "scheme": "TimeSeriesSplit",
+    "n_splits": 5,
+    "test_size": 0.2
+  },
+  "roc_auc_mean": 0.9954775316646778,
+  "roc_auc_std": 0.0020538340980710418,
+  "pr_auc_mean": 0.9913935873182245,
+  "f2_mean": 0.9734323722022513,
+  "brier_mean": 0.02095069932046623,
+  "artifact": "model_v1.joblib"
+}
