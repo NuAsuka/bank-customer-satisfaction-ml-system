@@ -16,6 +16,7 @@ N_BATCHES = 4
 DATE_COL = "review_dttm"
 FEATURE_COLUMNS = ["id_client", "review_dttm", "review_source", "review_text"]
 LABEL_COLUMNS = ["id_client", "review_dttm", "product", "review_emotion"]
+HISTORY_COLUMNS = ["id_client", "review_dttm", "review_source", "review_text", "product", "review_emotion"]
 
 
 def day_boundary(day_values, target: int) -> int:
@@ -62,7 +63,7 @@ def write_parts(parts: list[tuple[str, pd.DataFrame]]) -> None:
     for name, part in parts:
         frame = as_text(part)
         if name == HISTORY_NAME:
-            frame.to_csv(OUT_DIR / name, index=False, encoding="utf-8")
+            frame[HISTORY_COLUMNS].to_csv(OUT_DIR / name, index=False, encoding="utf-8")
         frame[FEATURE_COLUMNS].to_csv(FEATURES_DIR / name, index=False, encoding="utf-8")
         frame[LABEL_COLUMNS].to_csv(LABELS_DIR / name, index=False, encoding="utf-8")
 
